@@ -59,6 +59,22 @@ public class GameStatisticsService(ApplicationDbContext db, IMemoryCache cache)
             }
         );
 
+    /// <summary>
+    /// All matching finished games for an explicit export request. Not cached to avoid retaining a
+    /// full result set.
+    /// </summary>
+    public async Task<IReadOnlyList<LatestGame>> GetAllLatestGamesAsync(
+        GameStatisticsFilter filter,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var rows = await Query<StatisticsLatestRow>(
+            GameStatisticsSql.AllLatest(filter),
+            cancellationToken
+        );
+        return GameStatisticsShaper.ShapeLatest(rows, ScenarioCatalog.Instance);
+    }
+
     private Task<List<T>> Query<T>(StatisticsSqlQuery query, CancellationToken cancellationToken) =>
         db.Database.SqlQueryRaw<T>(query.Sql, query.Parameters).ToListAsync(cancellationToken);
 

@@ -173,7 +173,13 @@ else
     </div>
 
     <section class="card bg-base-200 shadow-md border border-base-300 p-4 mb-6" aria-labelledby="house-domination-heading">
-        <h2 id="house-domination-heading" class="text-lg font-semibold">House domination</h2>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 id="house-domination-heading" class="text-lg font-semibold">House domination</h2>
+            <a class="btn btn-sm btn-outline"
+               href="@Url.Page("/Statistics", "ExportHouses", filter.ToQueryValues().ToDictionary(value => value.Key, value => value.Value))">
+                Export house stats CSV
+            </a>
+        </div>
         <p class="text-sm opacity-70 mb-2">
             Win rate of each house: games won divided by games the house was played by a player,
             among the @overview.DecidedGames.ToString("N0", CultureInfo.InvariantCulture) games with a known winner.
@@ -256,7 +262,13 @@ else
     </section>
 
     <section class="card bg-base-200 shadow-md border border-base-300 p-4" aria-labelledby="latest-games-heading">
-        <h2 id="latest-games-heading" class="text-lg font-semibold mb-2">Latest games</h2>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h2 id="latest-games-heading" class="text-lg font-semibold">Latest games</h2>
+            <a class="btn btn-sm btn-outline"
+               href="@Url.Page("/Statistics", "ExportGames", filter.ToQueryValues().ToDictionary(value => value.Key, value => value.Value))">
+                Export matching games CSV
+            </a>
+        </div>
         <div class="overflow-x-auto rounded-box border border-base-300 bg-base-300">
             <table class="table table-zebra">
                 <thead>

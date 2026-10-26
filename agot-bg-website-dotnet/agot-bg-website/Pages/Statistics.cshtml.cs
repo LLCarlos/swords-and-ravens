@@ -1,5 +1,6 @@
 using agot_bg_website.Infrastructure.Paging;
 using agot_bg_website.Services.Statistics;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace agot_bg_website.Pages;
@@ -28,7 +29,7 @@ public class StatisticsModel(GameStatisticsService statistics) : PageModel
 
     public async Task OnGetAsync(int pageNumber = 1, int pageSize = 0)
     {
-        Filter = GameStatisticsFilter.Parse(key => Request.Query[key].FirstOrDefault());
+        Filter = ParseFilter();
 
         if (!Request.Query.ContainsKey("pageSize"))
         {
@@ -52,4 +53,45 @@ public class StatisticsModel(GameStatisticsService statistics) : PageModel
                     HttpContext.RequestAborted
                 );
     }
+
+    public async Task<IActionResult> OnGetExportHousesAsync()
+    {
+        var filter = ParseFilter();
+        var overview = await statistics.GetOverviewAsync(
+            filter,
+            HttpContext.RequestAborted
+        );
+        Response.Headers.CacheControl = "no-store";
+        return File(
+            GameStatisticsCsv.HouseStatistics(overview, ScenarioLabel(filter)),
+            "text/csv; charset=utf-8",
+            "statistics-houses.csv"
+        );
+    }
+
+    public async Task<IActionResult> OnGetExportGamesAsync()
+    {
+        var filter = ParseFilter();
+        var games = await statistics.GetAllLatestGamesAsync(
+            filter,
+            HttpContext.RequestAborted
+        );
+        Response.Headers.CacheControl = "no-store";
+        return File(
+            GameStatisticsCsv.Games(games),
+            "text/csv; charset=utf-8",
+            "statistics-games.csv"
+        );
+    }
+
+    private GameStatisticsFilter ParseFilter() =>
+        GameStatisticsFilter.Parse(key => Request.Query[key].FirstOrDefault());
+
+    private static string ScenarioLabel(GameStatisticsFilter filter) =>
+        filter.AllScenarios
+            ? "All scenarios"
+            : ScenarioCatalog.Instance.GetScenarioLabel(
+                filter.SetupId!,
+                filter.PlayerCount!.Value
+            );
 }

@@ -59,12 +59,28 @@ public static class GameStatisticsSql
     }
 
     /// <summary>One page of the newest matching games.</summary>
-    public static StatisticsSqlQuery Latest(GameStatisticsFilter filter, int offset, int limit)
+    public static StatisticsSqlQuery Latest(GameStatisticsFilter filter, int offset, int limit) =>
+        LatestGames(filter, offset, limit);
+
+    /// <summary>All matching games, newest first, for data exports.</summary>
+    public static StatisticsSqlQuery AllLatest(GameStatisticsFilter filter) =>
+        LatestGames(filter, null, null);
+
+    private static StatisticsSqlQuery LatestGames(
+        GameStatisticsFilter filter,
+        int? offset,
+        int? limit
+    )
     {
         var parameters = new List<object>();
         var cte = FilteredGames(filter, parameters, includeWinnerFlag: false);
-        var offsetPlaceholder = AddParameter(parameters, offset);
-        var limitPlaceholder = AddParameter(parameters, limit);
+        var pagination = "";
+        if (offset is { } pageOffset && limit is { } pageLimit)
+        {
+            var offsetPlaceholder = AddParameter(parameters, pageOffset);
+            var limitPlaceholder = AddParameter(parameters, pageLimit);
+            pagination = $"OFFSET {offsetPlaceholder} LIMIT {limitPlaceholder}";
+        }
         var sql =
             cte
             + $"""
@@ -88,7 +104,7 @@ public static class GameStatisticsSql
                 ) w ON true
                 LEFT JOIN "AspNetUsers" u ON u."Id" = w."UserId"
                 ORDER BY f."LastActiveAt" DESC, f."Id"
-                OFFSET {offsetPlaceholder} LIMIT {limitPlaceholder}
+                {pagination}
                 """;
         return new(sql, [.. parameters]);
     }
